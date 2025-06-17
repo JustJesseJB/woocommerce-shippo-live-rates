@@ -28,14 +28,63 @@ class WC_Shipping_Shippo_Live_Rates extends WC_Shipping_Method {
      *
      * @var bool
      */
-    private $cache_enabled;
+    protected $cache_enabled;
     
     /**
      * Cache duration in seconds
      *
      * @var int
      */
-    private $cache_duration;
+    protected $cache_duration;
+    
+    /**
+     * API key for Shippo
+     *
+     * @var string
+     */
+    protected $api_key;
+    
+    /**
+     * Enabled carriers
+     *
+     * @var array
+     */
+    protected $enabled_carriers;
+    
+    /**
+     * Enabled services
+     *
+     * @var array
+     */
+    protected $enabled_services;
+    
+    /**
+     * Markup type
+     *
+     * @var string
+     */
+    protected $markup_type;
+    
+    /**
+     * Markup amount
+     *
+     * @var float
+     */
+    protected $markup_amount;
+    
+    /**
+     * Whether to show delivery time
+     *
+     * @var bool
+     */
+    protected $show_delivery_time;
+    
+    /**
+     * Debug mode
+     *
+     * @var bool
+     */
+    protected $debug_mode;
     
     /**
      * Available carrier services
@@ -221,6 +270,27 @@ class WC_Shipping_Shippo_Live_Rates extends WC_Shipping_Method {
                 'default'     => 'yes',
                 'desc_tip'    => true,
             ),
+            'fallback_enabled' => array(
+                'title'       => __('Enable Fallback Rate', 'woocommerce-shippo-live-rates'),
+                'type'        => 'checkbox',
+                'description' => __('Show this rate when no Shippo rates are available.', 'woocommerce-shippo-live-rates'),
+                'default'     => 'yes',
+                'desc_tip'    => true,
+            ),
+            'fallback_title' => array(
+                'title'       => __('Fallback Rate Title', 'woocommerce-shippo-live-rates'),
+                'type'        => 'text',
+                'description' => __('The title for the fallback shipping rate.', 'woocommerce-shippo-live-rates'),
+                'default'     => __('Standard Shipping', 'woocommerce-shippo-live-rates'),
+                'desc_tip'    => true,
+            ),
+            'fallback_amount' => array(
+                'title'       => __('Fallback Rate Amount', 'woocommerce-shippo-live-rates'),
+                'type'        => 'text',
+                'description' => __('The cost for the fallback shipping rate.', 'woocommerce-shippo-live-rates'),
+                'default'     => '10.00',
+                'desc_tip'    => true,
+            ),
         );
     }
     
@@ -247,9 +317,35 @@ class WC_Shipping_Shippo_Live_Rates extends WC_Shipping_Method {
      * @param array $package The shipping package data.
      */
     public function calculate_shipping($package = array()) {
+        // Add test rate for debugging - remove in production
+        // $this->add_rate([
+        //     'id' => 'shippo_test_rate',
+        //     'label' => 'Test Shipping Rate',
+        //     'cost' => 10.00,
+        // ]);
+        
+        // Enhanced debugging
+        $this->log('=== BEGIN CALCULATE_SHIPPING ===');
+        $this->log('API Key: ' . (empty($this->api_key) ? 'EMPTY' : 'SET (Hidden for security)'));
+        
+        if (isset($package['contents'])) {
+            $this->log('Package Contents: ' . count($package['contents']) . ' items');
+        }
+        
+        if (isset($package['destination'])) {
+            $this->log('Destination: ' . wp_json_encode($package['destination']));
+        }
+        
+        // Debug API connection
+        if (!empty($this->api_key) && isset($this->api)) {
+            $test_connection = $this->api->test_connection();
+            $this->log('API Connection Test: ' . ($test_connection ? 'SUCCESS' : 'FAILURE'));
+        }
+        
         // Check if API key is set
         if (empty($this->api_key)) {
             $this->log('API key is not set. Aborting rate calculation.');
+            $this->maybe_add_fallback_rate($package);
             return;
         }
         
@@ -257,8 +353,11 @@ class WC_Shipping_Shippo_Live_Rates extends WC_Shipping_Method {
         $carriers = $this->get_option('carriers', array('usps'));
         if (empty($carriers)) {
             $this->log('No carriers selected. Aborting rate calculation.');
+            $this->maybe_add_fallback_rate($package);
             return;
         }
+        
+        $this->log('Selected carriers: ' . implode(', ', $carriers));
         
         // Check cache first if enabled
         $rates = false;
@@ -279,7 +378,8 @@ class WC_Shipping_Shippo_Live_Rates extends WC_Shipping_Method {
         
         // Verify we have all required address fields
         if (!$this->validate_address_fields($package['destination'])) {
-            $this->log('Incomplete address. Cannot calculate shipping rates.');
+            $this->log('Incomplete address. Missing fields: ' . $this->get_missing_address_fields($package['destination']));
+            $this->maybe_add_fallback_rate($package);
             return;
         }
         
@@ -292,19 +392,31 @@ class WC_Shipping_Shippo_Live_Rates extends WC_Shipping_Method {
         
         if (empty($parcels)) {
             $this->log('No valid parcels found. Aborting rate calculation.');
+            $this->maybe_add_fallback_rate($package);
             return;
         }
         
         // Get rates from API
+        $this->log('Calling API->get_rates()');
         $response = $this->api->get_rates($origin, $destination, $parcels, $carriers);
         
         if (!$response || isset($response['error'])) {
-            $this->log('Failed to get rates from API. ' . (isset($response['error']) ? wp_json_encode($response['error']) : 'Unknown error'), 'error');
+            $error_msg = isset($response['error']) ? wp_json_encode($response['error']) : 'Unknown error';
+            $this->log('Failed to get rates from API. Error: ' . $error_msg, 'error');
+            $this->maybe_add_fallback_rate($package);
             return;
         }
         
         // Process rates
+        $this->log('Processing shipping rates from response');
         $rates = $this->process_shipping_rates($response);
+        
+        // If no rates returned, use fallback
+        if (empty($rates)) {
+            $this->log('No shipping rates found in API response.');
+            $this->maybe_add_fallback_rate($package);
+            return;
+        }
         
         // Save to cache if enabled
         if ($this->cache_enabled && !empty($rates) && !empty($cache_key)) {
@@ -313,7 +425,33 @@ class WC_Shipping_Shippo_Live_Rates extends WC_Shipping_Method {
         }
         
         // Add rates to WooCommerce
+        $this->log('Adding ' . count($rates) . ' shipping rates to WooCommerce');
         $this->add_rates_to_woocommerce($rates);
+        $this->log('=== END CALCULATE_SHIPPING ===');
+    }
+    
+    /**
+     * Get missing address fields as a string
+     *
+     * @param array $address Address data.
+     * @return string Missing fields list.
+     */
+    private function get_missing_address_fields($address) {
+        $required_fields = array('address_1', 'city', 'postcode', 'country');
+        $missing = array();
+        
+        foreach ($required_fields as $field) {
+            if (empty($address[$field])) {
+                $missing[] = $field;
+            }
+        }
+        
+        // If country is US, state is required
+        if (isset($address['country']) && $address['country'] === 'US' && empty($address['state'])) {
+            $missing[] = 'state';
+        }
+        
+        return implode(', ', $missing);
     }
     
     /**
@@ -509,17 +647,26 @@ class WC_Shipping_Shippo_Live_Rates extends WC_Shipping_Method {
      * @return array Address data.
      */
     private function get_destination_address($package) {
+        // Initialize with empty values to prevent undefined index notices
+        $first_name = isset($package['destination']['first_name']) ? $package['destination']['first_name'] : '';
+        $last_name = isset($package['destination']['last_name']) ? $package['destination']['last_name'] : '';
+        
         $address = array(
-            'name'    => trim($package['destination']['first_name'] . ' ' . $package['destination']['last_name']),
-            'street1' => $package['destination']['address_1'],
-            'street2' => $package['destination']['address_2'],
-            'city'    => $package['destination']['city'],
-            'state'   => $package['destination']['state'],
-            'zip'     => $package['destination']['postcode'],
-            'country' => $package['destination']['country'],
+            'name'    => trim($first_name . ' ' . $last_name),
+            'street1' => isset($package['destination']['address_1']) ? $package['destination']['address_1'] : '',
+            'street2' => isset($package['destination']['address_2']) ? $package['destination']['address_2'] : '',
+            'city'    => isset($package['destination']['city']) ? $package['destination']['city'] : '',
+            'state'   => isset($package['destination']['state']) ? $package['destination']['state'] : '',
+            'zip'     => isset($package['destination']['postcode']) ? $package['destination']['postcode'] : '',
+            'country' => isset($package['destination']['country']) ? $package['destination']['country'] : '',
             'phone'   => '',
             'email'   => '',
         );
+        
+        // If name is empty, use a default
+        if (empty(trim($address['name']))) {
+            $address['name'] = 'Customer';
+        }
         
         // Try to get phone and email from customer data
         $customer_id = get_current_user_id();
@@ -534,6 +681,24 @@ class WC_Shipping_Shippo_Live_Rates extends WC_Shipping_Method {
             if (isset($customer['phone'])) {
                 $address['phone'] = $customer['phone'];
             }
+        }
+        
+        // Try to get email from order
+        if (empty($address['email']) && WC()->session) {
+            $customer = WC()->session->get('customer');
+            if (isset($customer['email'])) {
+                $address['email'] = $customer['email'];
+            }
+        }
+        
+        // If email is still empty, use a placeholder
+        if (empty($address['email'])) {
+            $address['email'] = 'customer@example.com';
+        }
+        
+        // If phone is still empty, use a placeholder
+        if (empty($address['phone'])) {
+            $address['phone'] = '5555555555';
         }
         
         $this->log('Destination address: ' . wp_json_encode($address));
@@ -589,15 +754,15 @@ class WC_Shipping_Shippo_Live_Rates extends WC_Shipping_Method {
             $product = $item['data'];
             
             // Add product weight (convert to kg if needed)
-            $weight = wc_get_weight($product->get_weight(), 'kg');
+            $weight = (float) wc_get_weight($product->get_weight(), 'kg');
             if ($weight > 0) {
                 $total_weight += $weight * $item['quantity'];
             }
             
             // Find largest dimensions
-            $length = wc_get_dimension($product->get_length(), 'cm');
-            $width = wc_get_dimension($product->get_width(), 'cm');
-            $height = wc_get_dimension($product->get_height(), 'cm');
+            $length = (float) wc_get_dimension($product->get_length(), 'cm');
+            $width = (float) wc_get_dimension($product->get_width(), 'cm');
+            $height = (float) wc_get_dimension($product->get_height(), 'cm');
             
             if ($length > 0 && $width > 0 && $height > 0) {
                 $has_dimensions = true;
@@ -619,18 +784,75 @@ class WC_Shipping_Shippo_Live_Rates extends WC_Shipping_Method {
             $max_height = 2;
         }
         
+        // Round values to 4 decimal places to prevent API errors
         $parcels[] = array(
-            'length'        => $max_length,
-            'width'         => $max_width,
-            'height'        => $max_height,
+            'length'        => round($max_length, 4),
+            'width'         => round($max_width, 4),
+            'height'        => round($max_height, 4),
             'distance_unit' => 'cm',
-            'weight'        => $total_weight,
+            'weight'        => round($total_weight, 4),
             'mass_unit'     => 'kg',
         );
         
         $this->log('Prepared package data: ' . wp_json_encode($parcels));
         
         return $parcels;
+    }
+    
+    /**
+     * Add fallback shipping rate if enabled
+     *
+     * @param array $package The shipping package.
+     */
+    private function maybe_add_fallback_rate($package) {
+        // Get fallback settings from global options
+        $options = get_option('wc_shippo_live_rates_options', array());
+        $fallback_enabled = isset($options['fallback_enabled']) ? $options['fallback_enabled'] : 'no';
+        
+        // Also check instance settings for fallback
+        $instance_fallback = $this->get_option('fallback_enabled');
+        if (!empty($instance_fallback)) {
+            $fallback_enabled = $instance_fallback;
+        }
+        
+        if ($fallback_enabled === 'yes') {
+            // Try instance settings first, then global
+            $fallback_amount = $this->get_option('fallback_amount');
+            if (empty($fallback_amount)) {
+                $fallback_amount = isset($options['fallback_amount']) ? $options['fallback_amount'] : '10';
+            }
+            
+            $fallback_title = $this->get_option('fallback_title');
+            if (empty($fallback_title)) {
+                $fallback_title = isset($options['fallback_title']) ? $options['fallback_title'] : __('Flat Rate Shipping', 'woocommerce-shippo-live-rates');
+            }
+            
+            $this->log('Adding fallback shipping rate: ' . $fallback_title . ' - ' . $fallback_amount);
+            
+            $rate = array(
+                'id'        => $this->id . ':fallback',
+                'label'     => $fallback_title,
+                'cost'      => $fallback_amount,
+                'meta_data' => array(
+                    'is_fallback' => true,
+                ),
+            );
+            
+            $this->add_rate($rate);
+        } else {
+            // Always add a backup fallback rate if debugging is enabled
+            if ($this->debug_mode) {
+                $this->log('Adding emergency fallback rate for debugging');
+                $this->add_rate(array(
+                    'id'        => $this->id . ':emergency_fallback',
+                    'label'     => 'Standard Shipping (Fallback)',
+                    'cost'      => 10.00,
+                    'meta_data' => array(
+                        'is_emergency_fallback' => true,
+                    ),
+                ));
+            }
+        }
     }
     
     /**
