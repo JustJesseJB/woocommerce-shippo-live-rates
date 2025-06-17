@@ -91,6 +91,9 @@ function wc_shippo_live_rates_after_wc_init() {
     
     // Add diagnostic information to WooCommerce system status report
     add_action('woocommerce_system_status_report', 'wc_shippo_live_rates_add_system_status_info');
+    
+    // Initialize the settings class
+    $settings = new Shippo_Settings();
 }
 
 /**
@@ -108,7 +111,7 @@ function wc_shippo_live_rates_admin_scripts($hook) {
     $screen = get_current_screen();
     
     // Only enqueue on our settings page or WooCommerce shipping settings
-    if ('woocommerce_page_wc-shippo-live-rates' === $screen->id || 'woocommerce_page_wc-settings' === $screen->id) {
+    if (isset($screen->id) && ('woocommerce_page_wc-shippo-live-rates' === $screen->id || 'woocommerce_page_wc-settings' === $screen->id)) {
         wp_enqueue_style('wc-shippo-admin-styles', WC_SHIPPO_LIVE_RATES_PLUGIN_ASSETS_URL . 'css/admin.css', array(), WC_SHIPPO_LIVE_RATES_VERSION);
         wp_enqueue_script('wc-shippo-admin-scripts', WC_SHIPPO_LIVE_RATES_PLUGIN_ASSETS_URL . 'js/admin.js', array('jquery'), WC_SHIPPO_LIVE_RATES_VERSION, true);
         

@@ -64,7 +64,7 @@ class Shippo_Settings {
             'woocommerce',
             __('Shippo Live Rates', 'woocommerce-shippo-live-rates'),
             __('Shippo Live Rates', 'woocommerce-shippo-live-rates'),
-            'manage_woocommerce',
+            'manage_options', // Using manage_options instead of manage_woocommerce
             'wc-shippo-live-rates',
             array($this, 'settings_page')
         );
@@ -388,7 +388,7 @@ class Shippo_Settings {
      */
     public function settings_page() {
         // Check user capabilities
-        if (!current_user_can('manage_woocommerce')) {
+        if (!current_user_can('manage_options')) {
             return;
         }
         
@@ -714,7 +714,7 @@ class Shippo_Settings {
         }
         
         // Check user capabilities
-        if (!current_user_can('manage_woocommerce')) {
+        if (!current_user_can('manage_options')) {
             wp_send_json_error(__('You do not have permission to do this.', 'woocommerce-shippo-live-rates'));
         }
         
