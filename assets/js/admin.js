@@ -16,7 +16,7 @@
                 var $button = $(this);
                 var originalText = $button.text();
                 
-                $button.text(wc_shippo_params.i18n.success);
+                $button.text(wc_shippo_params && wc_shippo_params.i18n ? wc_shippo_params.i18n.success : 'Copied!');
                 setTimeout(function() {
                     $button.text(originalText);
                 }, 2000);
@@ -33,21 +33,21 @@
                 $spinner.css('visibility', 'visible');
                 
                 $.ajax({
-                    url: wc_shippo_params.ajax_url,
+                    url: wc_shippo_params && wc_shippo_params.ajax_url ? wc_shippo_params.ajax_url : ajaxurl,
                     type: 'POST',
                     data: {
                         action: 'wc_shippo_clear_cache',
-                        nonce: wc_shippo_params.nonce
+                        nonce: wc_shippo_params && wc_shippo_params.nonce ? wc_shippo_params.nonce : ''
                     },
                     success: function(response) {
                         if (response.success) {
                             alert(response.data);
                         } else {
-                            alert(response.data || wc_shippo_params.i18n.error);
+                            alert(response.data || (wc_shippo_params && wc_shippo_params.i18n ? wc_shippo_params.i18n.error : 'An error occurred.'));
                         }
                     },
                     error: function() {
-                        alert(wc_shippo_params.i18n.error);
+                        alert(wc_shippo_params && wc_shippo_params.i18n ? wc_shippo_params.i18n.error : 'An error occurred.');
                     },
                     complete: function() {
                         $button.prop('disabled', false);

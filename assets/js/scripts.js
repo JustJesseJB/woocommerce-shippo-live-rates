@@ -10,36 +10,40 @@
     // Initialize when DOM is ready
     $(document).ready(function() {
         // Only run on checkout page
-        if (!$('form.woocommerce-checkout').length) {
+        if (!$('form.woocommerce-checkout').length && !$('.woocommerce-cart-form').length) {
             return;
         }
         
-        // Add loading indicator when shipping calculator is used
-        $(document.body).on('updated_shipping_method', function() {
+        // Handle shipping method display
+        function enhanceShippingMethods() {
             $('.shipping_method').each(function() {
                 if ($(this).val() && $(this).val().indexOf('shippo_live_rates') >= 0) {
-                    // Add carrier logos if available
-                    const carrierName = $(this).closest('li').find('label').text().toLowerCase();
+                    var $label = $(this).closest('li').find('label');
                     
-                    if (carrierName.indexOf('usps') >= 0) {
-                        $(this).closest('li').find('label').addClass('wc-shippo-live-rate');
-                    } else if (carrierName.indexOf('ups') >= 0) {
-                        $(this).closest('li').find('label').addClass('wc-shippo-live-rate');
-                    } else if (carrierName.indexOf('fedex') >= 0) {
-                        $(this).closest('li').find('label').addClass('wc-shippo-live-rate');
+                    // Only add class if not already added
+                    if (!$label.hasClass('wc-shippo-live-rate')) {
+                        $label.addClass('wc-shippo-live-rate');
+                        
+                        // Identify carrier for possible styling
+                        var labelText = $label.text().toLowerCase();
+                        if (labelText.indexOf('usps') >= 0) {
+                            $label.addClass('wc-shippo-carrier-usps');
+                        } else if (labelText.indexOf('ups') >= 0) {
+                            $label.addClass('wc-shippo-carrier-ups');
+                        } else if (labelText.indexOf('fedex') >= 0) {
+                            $label.addClass('wc-shippo-carrier-fedex');
+                        }
                     }
                 }
             });
+        }
+        
+        // Listen for shipping calculation events
+        $(document.body).on('updated_shipping_method updated_checkout updated_wc_div', function() {
+            enhanceShippingMethods();
         });
         
-        // Trigger updated_shipping_method to apply the changes
-        $(document.body).trigger('updated_shipping_method');
-    });
-    
-    // Handle shipping calculator updates in cart
-    $(document.body).on('updated_wc_div', function() {
-        if ($('.shipping_method').length) {
-            $(document.body).trigger('updated_shipping_method');
-        }
+        // Initial enhancement
+        enhanceShippingMethods();
     });
 })(jQuery);

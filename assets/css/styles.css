@@ -8,12 +8,23 @@
 .wc-shippo-live-rate {
     display: flex;
     align-items: center;
+    padding: 5px 0;
 }
 
-.wc-shippo-live-rate .wc-shippo-carrier-logo {
-    margin-right: 10px;
-    max-width: 50px;
-    height: auto;
+/* Carrier-specific styling */
+.wc-shippo-carrier-usps {
+    font-weight: bold;
+    color: #333366;
+}
+
+.wc-shippo-carrier-ups {
+    font-weight: bold;
+    color: #351c15;
+}
+
+.wc-shippo-carrier-fedex {
+    font-weight: bold;
+    color: #4d148c;
 }
 
 .wc-shippo-delivery-time {

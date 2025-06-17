@@ -111,7 +111,8 @@ class Shippo_API {
         $shipment = $this->request('shipments/', 'POST', $shipment_data);
         
         if (!$shipment || isset($shipment['error'])) {
-            $this->log('Failed to create shipment: ' . wp_json_encode($shipment), 'error');
+            $error_message = isset($shipment['error']['detail']) ? $shipment['error']['detail'] : 'Unknown error';
+            $this->log('Failed to create shipment: ' . $error_message, 'error');
             return false;
         }
         
@@ -125,7 +126,8 @@ class Shippo_API {
         $response = $this->request('shipment-rates/', 'POST', $rates_data);
         
         if (!$response || isset($response['error'])) {
-            $this->log('Failed to get rates: ' . wp_json_encode($response), 'error');
+            $error_message = isset($response['error']['detail']) ? $response['error']['detail'] : 'Unknown error';
+            $this->log('Failed to get rates: ' . $error_message, 'error');
             return false;
         }
         
@@ -152,9 +154,12 @@ class Shippo_API {
                 'Content-Type' => 'application/json'
             ],
             'timeout' => 30,
+            'sslverify' => true,
         ];
         
         if (!empty($data) && in_array($method, ['POST', 'PUT'], true)) {
+            // Ensure all numeric values are rounded to 4 decimal places
+            $data = $this->round_numeric_values($data, 4);
             $args['body'] = wp_json_encode($data);
         }
         
@@ -181,6 +186,24 @@ class Shippo_API {
             return ['error' => $data];
         }
         
+        return $data;
+    }
+    
+    /**
+     * Rounds all numeric values in an array to a specific precision
+     *
+     * @param array $data      The data array to process
+     * @param int   $precision The decimal precision to round to
+     * @return array           The processed data array
+     */
+    private function round_numeric_values($data, $precision = 4) {
+        foreach ($data as $key => $value) {
+            if (is_array($value)) {
+                $data[$key] = $this->round_numeric_values($value, $precision);
+            } elseif (is_numeric($value)) {
+                $data[$key] = round((float)$value, $precision);
+            }
+        }
         return $data;
     }
     
