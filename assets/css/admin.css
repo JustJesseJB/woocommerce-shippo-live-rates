@@ -1,0 +1,136 @@
+/**
+ * WooCommerce Shippo Live Rates Admin Styles
+ */
+
+/* Settings page */
+.wc-shippo-live-rates-admin {
+    display: flex;
+    flex-wrap: wrap;
+    margin-top: 20px;
+}
+
+.wc-shippo-live-rates-admin-main {
+    flex: 2;
+    min-width: 600px;
+    margin-right: 20px;
+}
+
+.wc-shippo-live-rates-admin-sidebar {
+    flex: 1;
+    min-width: 250px;
+    max-width: 400px;
+}
+
+.wc-shippo-admin-card {
+    background: #fff;
+    border: 1px solid #ddd;
+    padding: 15px;
+    margin-bottom: 20px;
+    border-radius: 3px;
+    box-shadow: 0 1px 1px rgba(0,0,0,0.04);
+}
+
+.wc-shippo-admin-card h2 {
+    margin-top: 0;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+@media screen and (max-width: 960px) {
+    .wc-shippo-live-rates-admin-main {
+        min-width: 100%;
+        margin-right: 0;
+    }
+    .wc-shippo-live-rates-admin-sidebar {
+        min-width: 100%;
+        max-width: 100%;
+    }
+}
+
+/* Status items */
+.wc-shippo-status-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.wc-shippo-status-item .dashicons {
+    margin-right: 10px;
+}
+
+.wc-shippo-status-success .dashicons {
+    color: #46b450;
+}
+
+.wc-shippo-status-warning .dashicons {
+    color: #ffb900;
+}
+
+.wc-shippo-status-error .dashicons {
+    color: #dc3232;
+}
+
+/* Settings form elements */
+.wc-shippo-field-section {
+    margin-bottom: 20px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #eee;
+}
+
+.wc-shippo-field-section:last-child {
+    border-bottom: none;
+}
+
+.wc-shippo-field {
+    margin-bottom: 15px;
+}
+
+.wc-shippo-field label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+}
+
+.wc-shippo-field input[type="text"],
+.wc-shippo-field input[type="password"],
+.wc-shippo-field input[type="number"],
+.wc-shippo-field select,
+.wc-shippo-field textarea {
+    width: 100%;
+    max-width: 400px;
+}
+
+.wc-shippo-field .description {
+    color: #666;
+    font-style: italic;
+    margin-top: 5px;
+}
+
+/* Shipping zones table */
+table.wc-shippo-zones-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+table.wc-shippo-zones-table th,
+table.wc-shippo-zones-table td {
+    padding: 8px;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+}
+
+table.wc-shippo-zones-table th {
+    background-color: #f9f9f9;
+    font-weight: 600;
+}
+
+/* Debug info textarea */
+textarea#wc-shippo-debug-info {
+    font-family: monospace;
+    font-size: 11px;
+    white-space: pre;
+    overflow: auto;
+    width: 100%;
+    height: 150px;
+}

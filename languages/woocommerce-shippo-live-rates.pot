@@ -1,0 +1,291 @@
+# Copyright (C) 2023 Ambition Amplified, LLC
+# This file is distributed under the same license as the WooCommerce Shippo Live Rates package.
+msgid ""
+msgstr ""
+"Project-Id-Version: WooCommerce Shippo Live Rates 1.0.0\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/woocommerce-shippo-live-rates\n"
+"POT-Creation-Date: 2023-01-01T00:00:00+00:00\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"PO-Revision-Date: 2023-01-01T00:00:00+00:00\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"X-Generator: WP-CLI 2.7.1\n"
+"X-Domain: woocommerce-shippo-live-rates\n"
+
+#. Plugin Name of the plugin
+msgid "WooCommerce Shippo Live Rates"
+msgstr ""
+
+#. Plugin URI of the plugin
+msgid "https://wooshippo.com/"
+msgstr ""
+
+#. Description of the plugin
+msgid "Display live shipping rates from USPS, UPS, and FedEx at checkout using Shippo API."
+msgstr ""
+
+#. Author of the plugin
+msgid "Ambition Amplified, LLC"
+msgstr ""
+
+#. Author URI of the plugin
+msgid "https://ambitionamplified.com/"
+msgstr ""
+
+#: includes/admin/class-shippo-settings.php:96
+msgid "Shippo Live Rates"
+msgstr ""
+
+#: includes/admin/class-shippo-settings.php:108
+msgid "Help & Troubleshooting"
+msgstr ""
+
+#: includes/admin/class-shippo-settings.php:114
+msgid "Shippo API"
+msgstr ""
+
+#: includes/admin/class-shippo-settings.php:119
+msgid "For more information:"
+msgstr ""
+
+#: includes/admin/class-shippo-settings.php:120
+msgid "Shippo API Documentation"
+msgstr ""
+
+#: includes/admin/class-shippo-settings.php:121
+msgid "Supported Carriers"
+msgstr ""
+
+#: includes/admin/class-shippo-settings.php:134
+msgid "Shippo Live Rates Help"
+msgstr ""
+
+#: includes/admin/class-shippo-settings.php:136
+msgid "Common Issues"
+msgstr ""
+
+#: includes/admin/class-shippo-settings.php:138
+msgid "No rates showing at checkout - Ensure your store address is complete and your Shippo API key is valid."
+msgstr ""
+
+#: includes/admin/class-shippo-settings.php:139
+msgid "Missing carriers - Check that you have configured the carriers in your Shippo account and selected them in the plugin settings."
+msgstr ""
+
+#: includes/admin/class-shippo-settings.php:140
+msgid "Incorrect rates - Verify product weights and dimensions are set correctly. Make sure your Shippo account has the correct negotiated rates configured."
+msgstr ""
+
+#: includes/admin/class-shippo-settings.php:143
+msgid "Troubleshooting Steps"
+msgstr ""
+
+#: includes/admin/class-shippo-settings.php:145
+msgid "Enable Debug Mode to log API requests and responses."
+msgstr ""
+
+#: includes/admin/class-shippo-settings.php:146
+msgid "Check the logs in WooCommerce > Status > Logs for any error messages."
+msgstr ""
+
+#: includes/admin/class-shippo-settings.php:147
+msgid "Clear the rates cache after making changes to your settings."
+msgstr ""
+
+#: includes/admin/class-shippo-settings.php:148
+msgid "Verify your store address and customer address have all required fields."
+msgstr ""
+
+#: includes/admin/class-shippo-settings.php:149
+msgid "Ensure products have weights and dimensions set correctly."
+msgstr ""
+
+#: includes/admin/class-shippo-settings.php:162
+msgid "Shippo API Information"
+msgstr ""
+
+#: includes/admin/class-shippo-settings.php:164
+msgid "Getting Your API Key"
+msgstr ""
+
+#: includes/admin/class-shippo-settings.php:166
+msgid "Sign up for a Shippo account at goshippo.com"
+msgstr ""
+
+#: includes/admin/class-shippo-settings.php:167
+msgid "Go to the API section in your Shippo dashboard"
+msgstr ""
+
+#: includes/admin/class-shippo-settings.php:168
+msgid "Generate a new API key"
+msgstr ""
+
+#: includes/admin/class-shippo-settings.php:169
+msgid "Copy the API key and paste it into the plugin settings"
+msgstr ""
+
+#: includes/admin/class-shippo-settings.php:172
+msgid "API Request Limits"
+msgstr ""
+
+#: includes/admin/class-shippo-settings.php:173
+msgid "Shippo has rate limits on their API. The plugin uses caching to reduce the number of API requests. If you experience rate limiting, try increasing the cache duration."
+msgstr ""
+
+#: includes/admin/class-shippo-settings.php:176
+msgid "Testing Mode"
+msgstr ""
+
+#: includes/admin/class-shippo-settings.php:177
+msgid "Shippo provides test API keys that you can use to test the integration without creating real shipments. Test API keys start with \"shippo_test_\"."
+msgstr ""
+
+#: includes/admin/class-shippo-settings.php:191
+msgid "General Settings"
+msgstr ""
+
+#: includes/admin/class-shippo-settings.php:197
+msgid "Global Debug Mode"
+msgstr ""
+
+#: includes/admin/class-shippo-settings.php:204
+msgid "Clear Cache"
+msgstr ""
+
+#: includes/admin/class-shippo-settings.php:211
+msgid "Advanced Settings"
+msgstr ""
+
+#: includes/admin/class-shippo-settings.php:217
+msgid "Package Strategy"
+msgstr ""
+
+#: includes/admin/class-shippo-settings.php:224
+msgid "Fallback Rate"
+msgstr ""
+
+#: includes/admin/class-shippo-settings.php:257
+msgid "General settings for Shippo Live Rates."
+msgstr ""
+
+#: includes/admin/class-shippo-settings.php:264
+msgid "Advanced settings for experienced users."
+msgstr ""
+
+#: includes/admin/class-shippo-settings.php:275
+msgid "Enable debug logging for all shipping zones"
+msgstr ""
+
+#: includes/admin/class-shippo-settings.php:278
+msgid "Logs API requests and responses to WooCommerce > Status > Logs."
+msgstr ""
+
+#: includes/admin/class-shippo-settings.php:289
+msgid "Clear Rates Cache"
+msgstr ""
+
+#: includes/admin/class-shippo-settings.php:292
+msgid "Clear all cached shipping rates to force real-time calculation."
+msgstr ""
+
+#: includes/admin/class-shippo-settings.php:324
+msgid "An error occurred while clearing the cache."
+msgstr ""
+
+#: includes/admin/class-shippo-settings.php:341
+msgid "Single Package (all items in one box)"
+msgstr ""
+
+#: includes/admin/class-shippo-settings.php:344
+msgid "Per Item (each item in separate box)"
+msgstr ""
+
+#: includes/admin/class-shippo-settings.php:347
+msgid "Weight Based (split by max weight)"
+msgstr ""
+
+#: includes/admin/class-shippo-settings.php:351
+msgid "How products should be packaged for shipping rate calculation."
+msgstr ""
+
+#: includes/admin/class-shippo-settings.php:369
+msgid "Enable fallback rate"
+msgstr ""
+
+#: includes/admin/class-shippo-settings.php:372
+msgid "Show this rate when no Shippo rates are available."
+msgstr ""
+
+#: includes/admin/class-shippo-settings.php:376
+msgid "Rate Title:"
+msgstr ""
+
+#: includes/admin/class-shippo-settings.php:383
+msgid "Amount:"
+msgstr ""
+
+#: includes/admin/class-shippo-settings.php:415
+msgid "System Status"
+msgstr ""
+
+#: includes/admin/class-shippo-settings.php:431
+msgid "Debug Information"
+msgstr ""
+
+#: includes/admin/class-shippo-settings.php:432
+msgid "Use this information when contacting support."
+msgstr ""
+
+#: includes/admin/class-shippo-settings.php:435
+msgid "Copy Debug Info"
+msgstr ""
+
+#: includes/admin/class-shippo-settings.php:454
+msgid "Copied!"
+msgstr ""
+
+#: includes/admin/class-shippo-settings.php:462
+msgid "Useful Links"
+msgstr ""
+
+#: includes/admin/class-shippo-settings.php:464
+msgid "Shippo Website"
+msgstr ""
+
+#: includes/admin/class-shippo-settings.php:465
+msgid "API Documentation"
+msgstr ""
+
+#: includes/admin/class-shippo-settings.php:466
+msgid "WooCommerce Logs"
+msgstr ""
+
+#: includes/admin/class-shippo-settings.php:467
+msgid "Shipping Zones"
+msgstr ""
+
+#: includes/admin/class-shippo-settings.php:523
+msgid "Security check failed."
+msgstr ""
+
+#: includes/admin/class-shippo-settings.php:528
+msgid "You do not have permission to do this."
+msgstr ""
+
+#: includes/admin/class-shippo-settings.php:535
+msgid "Shippo rates cache has been cleared successfully."
+msgstr ""
+
+#: includes/admin/class-shippo-settings.php:537
+msgid "An error occurred while clearing the cache."
+msgstr ""
+
+#: includes/admin/class-shippo-settings.php:572
+msgid "Shippo Live Rates requires WooCommerce to be installed and active."
+msgstr ""
+
+#: includes/admin/class-shippo-settings.php:585
+msgid "Shippo Live Rates requires your store address to be set. Please set it in <a href=\"%s\">WooCommerce Settings</a>."
+msgstr ""

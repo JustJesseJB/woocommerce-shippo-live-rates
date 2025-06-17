@@ -1,3 +1,54 @@
 /**
- * WooCommerce Shippo Live Rates Styles
+ * WooCommerce Shippo Live Rates Frontend Styles
+ *
+ * @package WooCommerce_Shippo_Live_Rates
  */
+
+/* Shipping method display on checkout */
+.wc-shippo-live-rate {
+    display: flex;
+    align-items: center;
+}
+
+.wc-shippo-live-rate .wc-shippo-carrier-logo {
+    margin-right: 10px;
+    max-width: 50px;
+    height: auto;
+}
+
+.wc-shippo-delivery-time {
+    font-size: 0.85em;
+    color: #777;
+    margin-left: 5px;
+    font-style: italic;
+}
+
+/* Loading indicator during rate calculation */
+.wc-shippo-loading {
+    display: inline-block;
+    position: relative;
+    width: 16px;
+    height: 16px;
+    margin-left: 10px;
+    vertical-align: middle;
+}
+
+.wc-shippo-loading:after {
+    content: " ";
+    display: block;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2px solid #ddd;
+    border-top-color: #333;
+    animation: wc-shippo-spin 1s linear infinite;
+}
+
+@keyframes wc-shippo-spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
