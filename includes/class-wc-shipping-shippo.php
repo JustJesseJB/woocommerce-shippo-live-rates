@@ -464,17 +464,25 @@ class WC_Shipping_Shippo_Live_Rates extends WC_Shipping_Method {
         $rates = array();
         
         // Check if we have results
-        if (empty($response['rates'])) {
+        if (empty($response['results']) && empty($response['rates'])) {
             $this->log('No shipping rates found in API response.');
             return $rates;
         }
         
+        // Determine where the rates are stored in the response
+        $rate_items = !empty($response['results']) ? $response['results'] : $response['rates'];
+        
         // Get enabled services
         $enabled_services = $this->get_option('services', array());
         
-        foreach ($response['rates'] as $rate) {
+        foreach ($rate_items as $rate) {
+            // Skip if we don't have the necessary data
+            if (!isset($rate['servicelevel']) || !isset($rate['amount'])) {
+                continue;
+            }
+            
             // Extract carrier and service code from the rate
-            $service_code = isset($rate['service_level']['token']) ? $rate['service_level']['token'] : '';
+            $service_code = isset($rate['servicelevel']['token']) ? $rate['servicelevel']['token'] : '';
             $carrier_code = isset($rate['provider']) ? strtolower($rate['provider']) : '';
             
             // Skip if this service is not in our enabled services (if we have any specific services enabled)
@@ -494,7 +502,7 @@ class WC_Shipping_Shippo_Live_Rates extends WC_Shipping_Method {
             $rate_id = $this->id . ':' . $service_code;
             
             // Get service name
-            $service_name = isset($rate['service_level']['name']) ? $rate['service_level']['name'] : '';
+            $service_name = isset($rate['servicelevel']['name']) ? $rate['servicelevel']['name'] : '';
             
             // Format the label
             $label = $rate['provider'] . ' - ' . $service_name;
@@ -522,6 +530,12 @@ class WC_Shipping_Shippo_Live_Rates extends WC_Shipping_Method {
             );
         }
         
+        if (empty($rates)) {
+            $this->log('No valid shipping rates found after filtering.');
+        } else {
+            $this->log('Processed ' . count($rates) . ' shipping rates.');
+        }
+        
         return $rates;
     }
     
@@ -536,11 +550,14 @@ class WC_Shipping_Shippo_Live_Rates extends WC_Shipping_Method {
             return;
         }
         
+        $this->log('Adding ' . count($rates) . ' shipping rates to WooCommerce:');
+        
         foreach ($rates as $rate) {
+            $this->log('Adding rate: ' . $rate['label'] . ' - ' . $rate['cost']);
             $this->add_rate($rate);
         }
         
-        $this->log('Added ' . count($rates) . ' shipping rates to WooCommerce.');
+        $this->log('Completed adding shipping rates to WooCommerce.');
     }
     
     /**
