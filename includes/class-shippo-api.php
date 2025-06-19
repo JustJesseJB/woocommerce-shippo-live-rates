@@ -99,7 +99,7 @@ class Shippo_API {
             'carriers' => $carriers
         ]));
         
-        // Clean up carrier format if needed
+        // Format carriers array for API
         $formatted_carriers = [];
         foreach ($carriers as $carrier) {
             $formatted_carriers[] = strtolower($carrier);
@@ -114,7 +114,7 @@ class Shippo_API {
         ];
         
         // Create a shipment object first
-        $shipment = $this->request('shipments', 'POST', $shipment_data);
+        $shipment = $this->request('v1/shipments', 'POST', $shipment_data);
         
         if (!$shipment || isset($shipment['error'])) {
             $error_message = isset($shipment['error']['detail']) ? $shipment['error']['detail'] : 'Unknown error';
@@ -130,25 +130,24 @@ class Shippo_API {
         
         $this->log('Shipment created with ID: ' . $shipment['object_id']);
         
-        // Try different API endpoints for rates
-        // First attempt: shipment-rates
+        // Try the rates endpoint
         $rates_data = [
             'shipment' => $shipment['object_id'],
-            'carriers' => $formatted_carriers,
+            'carrier_accounts' => $formatted_carriers,
         ];
         
-        $response = $this->request('shipment-rates', 'POST', $rates_data);
+        $response = $this->request('v1/rates', 'POST', $rates_data);
         
-        // If that fails, try rates endpoint
+        // If that fails, try the shipment-rates endpoint
         if (!$response || isset($response['error'])) {
-            $this->log('Failed with shipment-rates endpoint, trying rates endpoint');
+            $this->log('Failed with rates endpoint, trying shipment-rates endpoint');
             
             $rates_data = [
                 'shipment' => $shipment['object_id'],
-                'carrier_accounts' => $formatted_carriers,
+                'carriers' => $formatted_carriers,
             ];
             
-            $response = $this->request('rates', 'POST', $rates_data);
+            $response = $this->request('v1/shipment-rates', 'POST', $rates_data);
         }
         
         if (!$response || isset($response['error'])) {
@@ -171,13 +170,8 @@ class Shippo_API {
      * @return array|false     Response data or false on failure.
      */
     private function request($endpoint, $method = 'GET', $data = []) {
-        // Clean up endpoint formatting
+        // Clean up endpoint formatting and ensure it starts with /
         $endpoint = ltrim($endpoint, '/');
-        
-        // Make sure we're using the correct API version
-        if (strpos($endpoint, 'v1/') !== 0 && strpos($endpoint, 'user') !== 0) {
-            $endpoint = 'v1/' . $endpoint;
-        }
         
         $url = $this->api_url . $endpoint;
         
@@ -215,7 +209,7 @@ class Shippo_API {
         $body = wp_remote_retrieve_body($response);
         $this->log("API response code: {$response_code}");
         
-        // Only log response body in debug mode to avoid excessive logging
+        // Only log part of the response body to avoid huge logs
         if ($this->debug_mode) {
             $body_preview = substr($body, 0, 500) . (strlen($body) > 500 ? '...' : '');
             $this->log("API response body preview: {$body_preview}");
@@ -255,28 +249,21 @@ class Shippo_API {
      * @return bool Whether connection was successful.
      */
     public function test_connection() {
-        // First try the user endpoint
-        $response = $this->request('user', 'GET');
+        // Try different endpoints for backward compatibility
+        $endpoints = [
+            'v1/user',
+            'user',
+            'v1/carrier_accounts',
+            'carrier_accounts'
+        ];
         
-        if ($response && !isset($response['error'])) {
-            $this->log('Connection test successful using user endpoint');
-            return true;
-        }
-        
-        // If that fails, try the /user/ endpoint
-        $response = $this->request('user/', 'GET');
-        
-        if ($response && !isset($response['error'])) {
-            $this->log('Connection test successful using user/ endpoint');
-            return true;
-        }
-        
-        // If both fail, try a simple carrier accounts check
-        $response = $this->request('carrier_accounts', 'GET');
-        
-        if ($response && !isset($response['error'])) {
-            $this->log('Connection test successful using carrier_accounts endpoint');
-            return true;
+        foreach ($endpoints as $endpoint) {
+            $response = $this->request($endpoint, 'GET');
+            
+            if ($response && !isset($response['error'])) {
+                $this->log('Connection test successful using ' . $endpoint . ' endpoint');
+                return true;
+            }
         }
         
         $this->log('Connection test failed on all endpoints', 'error');
@@ -290,7 +277,7 @@ class Shippo_API {
      * @return array|false Validated address or false on failure.
      */
     public function validate_address($address) {
-        $response = $this->request('addresses', 'POST', [
+        $response = $this->request('v1/addresses', 'POST', [
             'name' => isset($address['name']) ? $address['name'] : '',
             'street1' => isset($address['street1']) ? $address['street1'] : '',
             'street2' => isset($address['street2']) ? $address['street2'] : '',
@@ -315,7 +302,7 @@ class Shippo_API {
      * @return array|false Carrier accounts or false on failure.
      */
     public function get_carrier_accounts() {
-        $response = $this->request('carrier_accounts', 'GET');
+        $response = $this->request('v1/carrier_accounts', 'GET');
         
         if (!$response || isset($response['error'])) {
             $this->log('Failed to get carrier accounts: ' . wp_json_encode($response), 'error');
