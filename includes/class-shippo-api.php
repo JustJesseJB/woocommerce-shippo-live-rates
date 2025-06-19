@@ -99,6 +99,12 @@ class Shippo_API {
             'carriers' => $carriers
         ]));
         
+        // Clean up carrier format if needed
+        $formatted_carriers = [];
+        foreach ($carriers as $carrier) {
+            $formatted_carriers[] = strtolower($carrier);
+        }
+        
         // Prepare the API request for shipment
         $shipment_data = [
             'address_from' => $origin,
@@ -108,7 +114,7 @@ class Shippo_API {
         ];
         
         // Create a shipment object first
-        $shipment = $this->request('shipments/', 'POST', $shipment_data);
+        $shipment = $this->request('shipments', 'POST', $shipment_data);
         
         if (!$shipment || isset($shipment['error'])) {
             $error_message = isset($shipment['error']['detail']) ? $shipment['error']['detail'] : 'Unknown error';
@@ -116,14 +122,34 @@ class Shippo_API {
             return false;
         }
         
-        // Prepare the API request for rates with specific carriers
+        // Check if we have an object_id
+        if (!isset($shipment['object_id'])) {
+            $this->log('No object_id found in shipment response', 'error');
+            return false;
+        }
+        
+        $this->log('Shipment created with ID: ' . $shipment['object_id']);
+        
+        // Try different API endpoints for rates
+        // First attempt: shipment-rates
         $rates_data = [
             'shipment' => $shipment['object_id'],
-            'carriers' => $carriers,
+            'carriers' => $formatted_carriers,
         ];
         
-        // Get rates for the shipment
-        $response = $this->request('shipment-rates/', 'POST', $rates_data);
+        $response = $this->request('shipment-rates', 'POST', $rates_data);
+        
+        // If that fails, try rates endpoint
+        if (!$response || isset($response['error'])) {
+            $this->log('Failed with shipment-rates endpoint, trying rates endpoint');
+            
+            $rates_data = [
+                'shipment' => $shipment['object_id'],
+                'carrier_accounts' => $formatted_carriers,
+            ];
+            
+            $response = $this->request('rates', 'POST', $rates_data);
+        }
         
         if (!$response || isset($response['error'])) {
             $error_message = isset($response['error']['detail']) ? $response['error']['detail'] : 'Unknown error';
@@ -145,7 +171,17 @@ class Shippo_API {
      * @return array|false     Response data or false on failure.
      */
     private function request($endpoint, $method = 'GET', $data = []) {
-        $url = $this->api_url . ltrim($endpoint, '/');
+        // Clean up endpoint formatting
+        $endpoint = ltrim($endpoint, '/');
+        
+        // Make sure we're using the correct API version
+        if (strpos($endpoint, 'v1/') !== 0 && strpos($endpoint, 'user') !== 0) {
+            $endpoint = 'v1/' . $endpoint;
+        }
+        
+        $url = $this->api_url . $endpoint;
+        
+        $this->log("Making {$method} request to {$url}");
         
         $args = [
             'method' => $method,
@@ -163,8 +199,6 @@ class Shippo_API {
             $args['body'] = wp_json_encode($data);
         }
         
-        $this->log("Making {$method} request to {$url}");
-        
         // Make the API request
         $response = wp_remote_request($url, $args);
         
@@ -179,6 +213,14 @@ class Shippo_API {
         
         // Get response body
         $body = wp_remote_retrieve_body($response);
+        $this->log("API response code: {$response_code}");
+        
+        // Only log response body in debug mode to avoid excessive logging
+        if ($this->debug_mode) {
+            $body_preview = substr($body, 0, 500) . (strlen($body) > 500 ? '...' : '');
+            $this->log("API response body preview: {$body_preview}");
+        }
+        
         $data = json_decode($body, true);
         
         if ($response_code >= 400) {
@@ -213,16 +255,32 @@ class Shippo_API {
      * @return bool Whether connection was successful.
      */
     public function test_connection() {
-        // Make a simple API request to verify credentials
-        $response = $this->request('user/');
+        // First try the user endpoint
+        $response = $this->request('user', 'GET');
         
         if ($response && !isset($response['error'])) {
-            $this->log('Connection test successful');
+            $this->log('Connection test successful using user endpoint');
             return true;
-        } else {
-            $this->log('Connection test failed', 'error');
-            return false;
         }
+        
+        // If that fails, try the /user/ endpoint
+        $response = $this->request('user/', 'GET');
+        
+        if ($response && !isset($response['error'])) {
+            $this->log('Connection test successful using user/ endpoint');
+            return true;
+        }
+        
+        // If both fail, try a simple carrier accounts check
+        $response = $this->request('carrier_accounts', 'GET');
+        
+        if ($response && !isset($response['error'])) {
+            $this->log('Connection test successful using carrier_accounts endpoint');
+            return true;
+        }
+        
+        $this->log('Connection test failed on all endpoints', 'error');
+        return false;
     }
     
     /**
@@ -232,7 +290,7 @@ class Shippo_API {
      * @return array|false Validated address or false on failure.
      */
     public function validate_address($address) {
-        $response = $this->request('addresses/', 'POST', [
+        $response = $this->request('addresses', 'POST', [
             'name' => isset($address['name']) ? $address['name'] : '',
             'street1' => isset($address['street1']) ? $address['street1'] : '',
             'street2' => isset($address['street2']) ? $address['street2'] : '',
@@ -257,7 +315,7 @@ class Shippo_API {
      * @return array|false Carrier accounts or false on failure.
      */
     public function get_carrier_accounts() {
-        $response = $this->request('carrier_accounts/');
+        $response = $this->request('carrier_accounts', 'GET');
         
         if (!$response || isset($response['error'])) {
             $this->log('Failed to get carrier accounts: ' . wp_json_encode($response), 'error');
