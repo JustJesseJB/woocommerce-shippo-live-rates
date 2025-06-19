@@ -32,12 +32,31 @@
                 $button.prop('disabled', true);
                 $spinner.css('visibility', 'visible');
                 
+                // Get the current nonce from the data attribute or from the global variable
+                var nonce = '';
+                
+                // Try to get nonce from data attribute first
+                if ($button.data('nonce')) {
+                    nonce = $button.data('nonce');
+                } 
+                // Then try the global variable
+                else if (typeof wc_shippo_params !== 'undefined' && wc_shippo_params.nonce) {
+                    nonce = wc_shippo_params.nonce;
+                }
+                // Finally, try to get it from a hidden field if present
+                else {
+                    var $nonceField = $('input[name="_wpnonce"]').first();
+                    if ($nonceField.length) {
+                        nonce = $nonceField.val();
+                    }
+                }
+                
                 $.ajax({
-                    url: wc_shippo_params && wc_shippo_params.ajax_url ? wc_shippo_params.ajax_url : ajaxurl,
+                    url: ajaxurl || wc_shippo_params.ajax_url,
                     type: 'POST',
                     data: {
                         action: 'wc_shippo_clear_cache',
-                        nonce: wc_shippo_params && wc_shippo_params.nonce ? wc_shippo_params.nonce : ''
+                        security: nonce  // Use 'security' instead of 'nonce'
                     },
                     success: function(response) {
                         if (response.success) {
