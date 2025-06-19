@@ -520,6 +520,7 @@ class WC_Shipping_Shippo_Live_Rates extends WC_Shipping_Method {
                 'id'        => $rate_id,
                 'label'     => $label,
                 'cost'      => $cost,
+                'carrier'   => $carrier_code, // Add carrier for sorting
                 'meta_data' => array(
                     'service_code'   => $service_code,
                     'carrier'        => $rate['provider'],
@@ -534,6 +535,18 @@ class WC_Shipping_Shippo_Live_Rates extends WC_Shipping_Method {
             $this->log('No valid shipping rates found after filtering.');
         } else {
             $this->log('Processed ' . count($rates) . ' shipping rates.');
+            
+            // Sort rates by carrier and then by cost
+            uasort($rates, function($a, $b) {
+                // First sort by carrier
+                $carrier_compare = strcmp($a['carrier'], $b['carrier']);
+                if ($carrier_compare !== 0) {
+                    return $carrier_compare;
+                }
+                
+                // Then sort by cost
+                return $a['cost'] <=> $b['cost'];
+            });
         }
         
         return $rates;
@@ -552,9 +565,35 @@ class WC_Shipping_Shippo_Live_Rates extends WC_Shipping_Method {
         
         $this->log('Adding ' . count($rates) . ' shipping rates to WooCommerce:');
         
+        // Group rates by carrier
+        $grouped_rates = array();
         foreach ($rates as $rate) {
-            $this->log('Adding rate: ' . $rate['label'] . ' - ' . $rate['cost']);
-            $this->add_rate($rate);
+            $carrier = $rate['meta_data']['carrier'];
+            if (!isset($grouped_rates[$carrier])) {
+                $grouped_rates[$carrier] = array();
+            }
+            $grouped_rates[$carrier][] = $rate;
+        }
+        
+        // Sort carriers alphabetically
+        ksort($grouped_rates);
+        
+        // Add rates by carrier group, each sorted by price
+        foreach ($grouped_rates as $carrier => $carrier_rates) {
+            // Sort by price within each carrier
+            usort($carrier_rates, function($a, $b) {
+                return $a['cost'] <=> $b['cost'];
+            });
+            
+            // Add the rates
+            foreach ($carrier_rates as $rate) {
+                $this->log('Adding rate: ' . $rate['label'] . ' - ' . $rate['cost']);
+                
+                // Remove carrier from rate array before adding to WC
+                unset($rate['carrier']);
+                
+                $this->add_rate($rate);
+            }
         }
         
         $this->log('Completed adding shipping rates to WooCommerce.');
