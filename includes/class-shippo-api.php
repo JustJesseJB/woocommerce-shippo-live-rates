@@ -128,26 +128,36 @@ class Shippo_API {
             return false;
         }
         
-        $this->log('Shipment created with ID: ' . $shipment['object_id']);
+        $shipment_id = $shipment['object_id'];
+        $this->log('Shipment created with ID: ' . $shipment_id);
         
-        // Try the rates endpoint
-        $rates_data = [
-            'shipment' => $shipment['object_id'],
-            'carrier_accounts' => $formatted_carriers,
-        ];
+        // Based on the error responses, try the direct rates endpoint with a GET request
+        $rates_url = 'v1/shipments/' . $shipment_id . '/rates/';
+        $response = $this->request($rates_url, 'GET');
         
-        $response = $this->request('v1/rates', 'POST', $rates_data);
-        
-        // If that fails, try the shipment-rates endpoint
+        // If that fails, try the alternative ways
         if (!$response || isset($response['error'])) {
-            $this->log('Failed with rates endpoint, trying shipment-rates endpoint');
+            $this->log('Failed with direct shipment rates endpoint, trying alternative endpoint');
             
+            // Try the POST method with shipment-rates
             $rates_data = [
-                'shipment' => $shipment['object_id'],
+                'shipment' => $shipment_id,
                 'carriers' => $formatted_carriers,
             ];
             
             $response = $this->request('v1/shipment-rates', 'POST', $rates_data);
+            
+            // If that also fails, try one more option
+            if (!$response || isset($response['error'])) {
+                $this->log('Failed with shipment-rates endpoint, trying rates endpoint');
+                
+                $rates_data = [
+                    'shipment' => $shipment_id,
+                    'carrier_accounts' => $formatted_carriers,
+                ];
+                
+                $response = $this->request('v1/rates', 'GET', $rates_data);
+            }
         }
         
         if (!$response || isset($response['error'])) {
