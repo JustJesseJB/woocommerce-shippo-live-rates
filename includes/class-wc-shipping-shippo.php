@@ -113,7 +113,8 @@ class WC_Shipping_Shippo_Live_Rates extends WC_Shipping_Method {
                 'ups_second_day_air_am' => '2nd Day Air A.M.',
                 'ups_next_day_air_saver' => 'Next Day Air Saver',
                 'ups_next_day_air' => 'Next Day Air',
-                'ups_next_day_air_early_am' => 'Next Day Air Early',
+                'ups_next_day_air_early' => 'Next Day Air Early',
+                'ups_next_day_air_early_am' => 'Next Day Air Early', // Alternate name
             ),
         ),
         'fedex' => array(
@@ -504,15 +505,25 @@ class WC_Shipping_Shippo_Live_Rates extends WC_Shipping_Method {
                 'amount' => $rate['amount']
             );
             
-            // Skip if this service is not in our enabled services (if we have any specific services enabled)
-            if (!empty($enabled_services) && !in_array($service_code, $enabled_services, true)) {
-                $this->log("Skipping service {$service_code} because it's not in enabled services list");
-                continue;
-            }
-            
             // Skip if this carrier is not in our enabled carriers
             if (!in_array($carrier_code, $this->enabled_carriers, true)) {
                 $this->log("Skipping carrier {$carrier_code} because it's not in enabled carriers list");
+                continue;
+            }
+            
+            // NEW CODE: If enabled_services is not empty, check if this service is enabled
+            // If it's a known service in our carrier_services array
+            $known_service = false;
+            foreach ($this->carrier_services as $carrier) {
+                if (isset($carrier['services']) && array_key_exists($service_code, $carrier['services'])) {
+                    $known_service = true;
+                    break;
+                }
+            }
+            
+            // If we have specific services enabled and this is a known service that's not enabled, skip it
+            if (!empty($enabled_services) && $known_service && !in_array($service_code, $enabled_services, true)) {
+                $this->log("Skipping service {$service_code} because it's not in enabled services list");
                 continue;
             }
             
