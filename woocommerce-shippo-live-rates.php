@@ -74,6 +74,9 @@ function wc_shippo_live_rates_init() {
     // Enqueue admin scripts and styles
     add_action('admin_enqueue_scripts', 'wc_shippo_live_rates_admin_scripts');
     
+    // Enqueue frontend scripts and styles
+    add_action('wp_enqueue_scripts', 'wc_shippo_live_rates_frontend_scripts');
+    
     // Add settings link on plugin page
     add_filter('plugin_action_links_' . WC_SHIPPO_LIVE_RATES_PLUGIN_BASENAME, 'wc_shippo_live_rates_plugin_action_links');
 }
@@ -102,6 +105,31 @@ function wc_shippo_live_rates_after_wc_init() {
 function wc_shippo_live_rates_add_shipping_method($methods) {
     $methods['shippo_live_rates'] = 'WC_Shipping_Shippo_Live_Rates';
     return $methods;
+}
+
+/**
+ * Enqueue frontend scripts and styles
+ */
+function wc_shippo_live_rates_frontend_scripts() {
+    // Only load on cart and checkout pages
+    if (is_cart() || is_checkout()) {
+        // Enqueue styles
+        wp_enqueue_style(
+            'wc-shippo-frontend-styles',
+            WC_SHIPPO_LIVE_RATES_PLUGIN_ASSETS_URL . 'css/styles.css',
+            array(),
+            WC_SHIPPO_LIVE_RATES_VERSION
+        );
+        
+        // Enqueue scripts
+        wp_enqueue_script(
+            'wc-shippo-frontend-scripts',
+            WC_SHIPPO_LIVE_RATES_PLUGIN_ASSETS_URL . 'js/scripts.js',
+            array('jquery'),
+            WC_SHIPPO_LIVE_RATES_VERSION,
+            true
+        );
+    }
 }
 
 /**
@@ -147,6 +175,114 @@ function wc_shippo_live_rates_plugin_action_links($links) {
     
     return array_merge($plugin_links, $links);
 }
+
+/**
+ * Add inline styling and script as fallback
+ * This ensures our shipping carrier separators work even if the CSS/JS files fail to load
+ */
+function wc_shippo_live_rates_inline_fallback() {
+    // Only add on cart and checkout pages
+    if (is_cart() || is_checkout()) {
+        ?>
+        <style type="text/css">
+            /* Carrier headers */
+            .wc-shippo-carrier-header {
+                margin: 15px 0 5px !important;
+                padding-bottom: 5px !important;
+                border-bottom: 1px solid #e0e0e0;
+            }
+            .wc-shippo-carrier-header span {
+                font-weight: bold;
+                font-size: 0.95em;
+                color: #333;
+            }
+            /* Last item in carrier group */
+            .wc-shippo-last-in-group {
+                margin-bottom: 15px !important;
+                padding-bottom: 15px !important;
+                border-bottom: 1px dashed #e5e5e5;
+            }
+            /* Remove border from last carrier group */
+            .wc-shippo-last-in-group:last-of-type {
+                border-bottom: none;
+            }
+            /* Carrier-specific styling */
+            .wc-shippo-carrier-usps {
+                font-weight: bold;
+                color: #333366;
+            }
+            .wc-shippo-carrier-ups {
+                font-weight: bold;
+                color: #351c15;
+            }
+            .wc-shippo-carrier-fedex {
+                font-weight: bold;
+                color: #4d148c;
+            }
+        </style>
+        <script type="text/javascript">
+            jQuery(document).ready(function($) {
+                function enhanceShippingMethods() {
+                    // Group rates by carrier
+                    var carriers = {};
+                    
+                    $('.shipping_method').each(function() {
+                        var $input = $(this);
+                        if ($input.val() && $input.val().indexOf('shippo_live_rates') >= 0) {
+                            var $label = $(this).closest('li').find('label');
+                            var labelText = $label.text();
+                            var carrierMatch = labelText.match(/^(UPS|USPS|FedEx)/i);
+                            
+                            if (carrierMatch) {
+                                var carrier = carrierMatch[0];
+                                
+                                if (!carriers[carrier]) {
+                                    carriers[carrier] = [];
+                                }
+                                
+                                carriers[carrier].push($(this).closest('li'));
+                                
+                                // Add carrier class to label
+                                $label.addClass('wc-shippo-live-rate');
+                                if (carrier.toLowerCase() === 'usps') {
+                                    $label.addClass('wc-shippo-carrier-usps');
+                                } else if (carrier.toLowerCase() === 'ups') {
+                                    $label.addClass('wc-shippo-carrier-ups');
+                                } else if (carrier.toLowerCase() === 'fedex') {
+                                    $label.addClass('wc-shippo-carrier-fedex');
+                                }
+                            }
+                        }
+                    });
+                    
+                    // Add carrier headers and organize groups
+                    Object.keys(carriers).forEach(function(carrier) {
+                        if (carriers[carrier].length > 0) {
+                            var $firstItem = carriers[carrier][0];
+                            var headerHtml = '<li class="wc-shippo-carrier-header"><span>' + carrier + ' Shipping Options</span></li>';
+                            $firstItem.before(headerHtml);
+                            
+                            // Add separator after last item in group
+                            var $lastItem = carriers[carrier][carriers[carrier].length - 1];
+                            $lastItem.addClass('wc-shippo-last-in-group');
+                        }
+                    });
+                }
+                
+                // Initial enhancement
+                enhanceShippingMethods();
+                
+                // Listen for shipping calculation events
+                $(document.body).on('updated_shipping_method updated_checkout updated_wc_div', function() {
+                    // Small delay to ensure DOM is updated
+                    setTimeout(enhanceShippingMethods, 100);
+                });
+            });
+        </script>
+        <?php
+    }
+}
+add_action('wp_footer', 'wc_shippo_live_rates_inline_fallback');
 
 // Initialize plugin on plugins_loaded to ensure WooCommerce detection works
 add_action('plugins_loaded', 'wc_shippo_live_rates_init');
