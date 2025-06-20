@@ -107,17 +107,20 @@ class WC_Shipping_Shippo_Live_Rates extends WC_Shipping_Method {
             'name' => 'UPS',
             'services' => array(
                 'ups_ground' => 'Ground',
+                'ups_ground_saver' => 'Ground Saver',
                 'ups_3_day_select' => '3 Day Select',
                 'ups_second_day_air' => '2nd Day Air',
+                'ups_second_day_air_am' => '2nd Day Air A.M.',
                 'ups_next_day_air_saver' => 'Next Day Air Saver',
                 'ups_next_day_air' => 'Next Day Air',
-                'ups_next_day_air_early' => 'Next Day Air Early',
+                'ups_next_day_air_early_am' => 'Next Day Air Early',
             ),
         ),
         'fedex' => array(
             'name' => 'FedEx',
             'services' => array(
                 'fedex_ground' => 'Ground',
+                'fedex_ground_economy' => 'Ground Economy', // Added this
                 'fedex_express_saver' => 'Express Saver',
                 'fedex_2day' => '2Day',
                 'fedex_2day_am' => '2Day A.M.',
@@ -475,6 +478,15 @@ class WC_Shipping_Shippo_Live_Rates extends WC_Shipping_Method {
         // Get enabled services
         $enabled_services = $this->get_option('services', array());
         
+        // Debug log
+        $this->log('Starting to process ' . count($rate_items) . ' shipping rates from Shippo API');
+        if (!empty($enabled_services)) {
+            $this->log('Enabled services filter is active: ' . implode(', ', $enabled_services));
+        }
+        
+        // Track all services found in API response
+        $found_services = array();
+        
         foreach ($rate_items as $rate) {
             // Skip if we don't have the necessary data
             if (!isset($rate['servicelevel']) || !isset($rate['amount'])) {
@@ -485,13 +497,22 @@ class WC_Shipping_Shippo_Live_Rates extends WC_Shipping_Method {
             $service_code = isset($rate['servicelevel']['token']) ? $rate['servicelevel']['token'] : '';
             $carrier_code = isset($rate['provider']) ? strtolower($rate['provider']) : '';
             
+            // Record this service for debugging
+            $found_services[$service_code] = array(
+                'carrier' => $carrier_code,
+                'name' => isset($rate['servicelevel']['name']) ? $rate['servicelevel']['name'] : '',
+                'amount' => $rate['amount']
+            );
+            
             // Skip if this service is not in our enabled services (if we have any specific services enabled)
             if (!empty($enabled_services) && !in_array($service_code, $enabled_services, true)) {
+                $this->log("Skipping service {$service_code} because it's not in enabled services list");
                 continue;
             }
             
             // Skip if this carrier is not in our enabled carriers
             if (!in_array($carrier_code, $this->enabled_carriers, true)) {
+                $this->log("Skipping carrier {$carrier_code} because it's not in enabled carriers list");
                 continue;
             }
             
@@ -530,6 +551,9 @@ class WC_Shipping_Shippo_Live_Rates extends WC_Shipping_Method {
                 ),
             );
         }
+        
+        // Log all services found for debugging
+        $this->log('All services returned by API: ' . wp_json_encode($found_services));
         
         if (empty($rates)) {
             $this->log('No valid shipping rates found after filtering.');
