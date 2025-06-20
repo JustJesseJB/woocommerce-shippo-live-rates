@@ -219,10 +219,31 @@ function wc_shippo_live_rates_inline_fallback() {
                 font-weight: bold;
                 color: #4d148c;
             }
+            
+            /* Ensure uniform font for all shipping methods */
+            .shipping_method + label {
+                font-weight: normal;
+            }
+            
+            /* Custom styling for shipping method list items */
+            ul#shipping_method li {
+                margin-bottom: 5px;
+            }
         </style>
         <script type="text/javascript">
             jQuery(document).ready(function($) {
+                // Global variable to track if we've already processed a group
+                var processedCarriers = {};
+                
                 function enhanceShippingMethods() {
+                    // Remove any existing headers and classes first to avoid duplication
+                    $('.wc-shippo-carrier-header').remove();
+                    $('.wc-shippo-last-in-group').removeClass('wc-shippo-last-in-group');
+                    $('.wc-shippo-live-rate').removeClass('wc-shippo-live-rate wc-shippo-carrier-usps wc-shippo-carrier-ups wc-shippo-carrier-fedex');
+                    
+                    // Reset the processed carriers tracking
+                    processedCarriers = {};
+                    
                     // Group rates by carrier
                     var carriers = {};
                     
@@ -257,7 +278,8 @@ function wc_shippo_live_rates_inline_fallback() {
                     
                     // Add carrier headers and organize groups
                     Object.keys(carriers).forEach(function(carrier) {
-                        if (carriers[carrier].length > 0) {
+                        if (carriers[carrier].length > 0 && !processedCarriers[carrier]) {
+                            processedCarriers[carrier] = true;
                             var $firstItem = carriers[carrier][0];
                             var headerHtml = '<li class="wc-shippo-carrier-header"><span>' + carrier + ' Shipping Options</span></li>';
                             $firstItem.before(headerHtml);
@@ -269,13 +291,13 @@ function wc_shippo_live_rates_inline_fallback() {
                     });
                 }
                 
-                // Initial enhancement
-                enhanceShippingMethods();
+                // Initial enhancement with a small delay to ensure all elements are loaded
+                setTimeout(enhanceShippingMethods, 300);
                 
                 // Listen for shipping calculation events
                 $(document.body).on('updated_shipping_method updated_checkout updated_wc_div', function() {
                     // Small delay to ensure DOM is updated
-                    setTimeout(enhanceShippingMethods, 100);
+                    setTimeout(enhanceShippingMethods, 300);
                 });
             });
         </script>

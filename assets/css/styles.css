@@ -52,11 +52,14 @@
     color: #4d148c;
 }
 
-.wc-shippo-delivery-time {
-    font-size: 0.85em;
-    color: #777;
-    margin-left: 5px;
-    font-style: italic;
+/* Ensure uniform font for all shipping methods */
+.shipping_method + label {
+    font-weight: normal;
+}
+
+/* Custom styling for shipping method list items */
+ul#shipping_method li {
+    margin-bottom: 5px;
 }
 
 /* Loading indicator during rate calculation */
