@@ -11,6 +11,31 @@
     padding: 5px 0;
 }
 
+/* Carrier headers */
+.wc-shippo-carrier-header {
+    margin: 15px 0 5px !important;
+    padding-bottom: 5px !important;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.wc-shippo-carrier-header span {
+    font-weight: bold;
+    font-size: 0.95em;
+    color: #333;
+}
+
+/* Last item in carrier group */
+.wc-shippo-last-in-group {
+    margin-bottom: 15px !important;
+    padding-bottom: 15px !important;
+    border-bottom: 1px dashed #e5e5e5;
+}
+
+/* Remove border from last carrier group */
+.wc-shippo-last-in-group:last-of-type {
+    border-bottom: none;
+}
+
 /* Carrier-specific styling */
 .wc-shippo-carrier-usps {
     font-weight: bold;
