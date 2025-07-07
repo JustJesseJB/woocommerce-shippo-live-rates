@@ -85,6 +85,26 @@ function wc_shippo_live_rates_init() {
  * Initialize components that depend on WooCommerce
  */
 function wc_shippo_live_rates_after_wc_init() {
+    // Check if WooCommerce shipping is initialized
+    if (!class_exists('WC_Shipping_Method')) {
+        // If not ready yet, wait for shipping init
+        add_action('woocommerce_shipping_init', 'wc_shippo_live_rates_load_shipping_method');
+        return;
+    }
+    
+    // Load immediately if shipping is ready
+    wc_shippo_live_rates_load_shipping_method();
+}
+
+/**
+ * Load the shipping method when WooCommerce shipping is ready
+ */
+function wc_shippo_live_rates_load_shipping_method() {
+    // Only load once
+    if (class_exists('WC_Shipping_Shippo_Live_Rates')) {
+        return;
+    }
+    
     // Now it's safe to include WooCommerce-dependent files
     require_once WC_SHIPPO_LIVE_RATES_PLUGIN_DIR . 'includes/class-wc-shipping-shippo.php';
     require_once WC_SHIPPO_LIVE_RATES_PLUGIN_DIR . 'includes/admin/class-shippo-settings.php';
@@ -96,7 +116,9 @@ function wc_shippo_live_rates_after_wc_init() {
     add_action('woocommerce_system_status_report', 'wc_shippo_live_rates_add_system_status_info');
     
     // Initialize the settings class
-    $settings = new Shippo_Settings();
+    if (class_exists('Shippo_Settings')) {
+        new Shippo_Settings();
+    }
 }
 
 /**
@@ -307,7 +329,7 @@ function wc_shippo_live_rates_inline_fallback() {
 add_action('wp_footer', 'wc_shippo_live_rates_inline_fallback');
 
 // Initialize plugin on plugins_loaded to ensure WooCommerce detection works
-add_action('plugins_loaded', 'wc_shippo_live_rates_init');
+add_action('plugins_loaded', 'wc_shippo_live_rates_init', 20); // Priority 20 to load after WooCommerce
 
 // Activation hook
 register_activation_hook(__FILE__, 'wc_shippo_live_rates_activate');
@@ -322,7 +344,13 @@ function wc_shippo_live_rates_activate() {
         wp_die(__('WooCommerce Shippo Live Rates requires WooCommerce to be installed and active.', 'woocommerce-shippo-live-rates'));
     }
     
-    // Create log files
+    // Check WooCommerce version
+    if (defined('WC_VERSION') && version_compare(WC_VERSION, '3.0', '<')) {
+        deactivate_plugins(plugin_basename(__FILE__));
+        wp_die(__('WooCommerce Shippo Live Rates requires WooCommerce 3.0 or higher.', 'woocommerce-shippo-live-rates'));
+    }
+    
+    // Create log files if WooCommerce logger is available
     if (class_exists('WC_Logger')) {
         $logger = new WC_Logger();
         $logger->add('woocommerce-shippo-live-rates', 'Plugin activated at ' . current_time('mysql'));

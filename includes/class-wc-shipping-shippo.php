@@ -10,6 +10,11 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+// Ensure WooCommerce shipping class exists before extending it
+if (!class_exists('WC_Shipping_Method')) {
+    return;
+}
+
 /**
  * WC_Shipping_Shippo_Live_Rates class
  * 
