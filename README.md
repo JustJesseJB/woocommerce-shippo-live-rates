@@ -33,6 +33,13 @@ A WooCommerce plugin for displaying live shipping rates from USPS, UPS, and FedE
 
 ## Changelog
 
+### 1.0.2 - 2024-12-20
+- **Fix**: Shipping carrier grouping display issues
+- **Fix**: Incorrect carrier categorization on some themes
+- **Fix**: Local pickup being selected by default
+- **Improve**: Carrier detection logic for better compatibility
+- **Improve**: Enforced carrier display order (FedEx → UPS → USPS)
+
 ### 1.0.1 - 2024-12-20
 - **Fix**: WooCommerce compatibility issue causing fatal errors on some installations
 - **Fix**: Improved plugin initialization to prevent conflicts with WooCommerce shipping classes
