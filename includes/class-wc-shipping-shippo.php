@@ -687,14 +687,28 @@ class WC_Shipping_Shippo_Live_Rates extends WC_Shipping_Method {
             }
             
             $product = $item['data'];
+            
+            // Get weight with proper null/empty handling
+            $weight = $product->get_weight();
+            $weight = (!empty($weight) && is_numeric($weight)) ? wc_get_weight($weight, 'kg') : 0;
+            
+            // Get dimensions with proper null/empty handling
+            $length = $product->get_length();
+            $width = $product->get_width();
+            $height = $product->get_height();
+            
+            $length = (!empty($length) && is_numeric($length)) ? wc_get_dimension($length, 'cm') : 0;
+            $width = (!empty($width) && is_numeric($width)) ? wc_get_dimension($width, 'cm') : 0;
+            $height = (!empty($height) && is_numeric($height)) ? wc_get_dimension($height, 'cm') : 0;
+            
             $contents[] = array(
                 'id'        => $product->get_id(),
                 'quantity'  => $item['quantity'],
-                'weight'    => wc_get_weight($product->get_weight(), 'kg'),
+                'weight'    => $weight,
                 'dimensions' => array(
-                    'length' => wc_get_dimension($product->get_length(), 'cm'),
-                    'width'  => wc_get_dimension($product->get_width(), 'cm'),
-                    'height' => wc_get_dimension($product->get_height(), 'cm'),
+                    'length' => $length,
+                    'width'  => $width,
+                    'height' => $height,
                 ),
             );
         }
@@ -849,22 +863,35 @@ class WC_Shipping_Shippo_Live_Rates extends WC_Shipping_Method {
             
             $product = $item['data'];
             
-            // Add product weight (convert to kg if needed)
-            $weight = (float) wc_get_weight($product->get_weight(), 'kg');
-            if ($weight > 0) {
-                $total_weight += $weight * $item['quantity'];
+            // Get weight with proper null/empty handling
+            $weight = $product->get_weight();
+            if (!empty($weight) && is_numeric($weight)) {
+                $weight = (float) wc_get_weight($weight, 'kg');
+                if ($weight > 0) {
+                    $total_weight += $weight * $item['quantity'];
+                }
             }
             
-            // Find largest dimensions
-            $length = (float) wc_get_dimension($product->get_length(), 'cm');
-            $width = (float) wc_get_dimension($product->get_width(), 'cm');
-            $height = (float) wc_get_dimension($product->get_height(), 'cm');
+            // Get dimensions with proper null/empty handling
+            $length = $product->get_length();
+            $width = $product->get_width();
+            $height = $product->get_height();
             
-            if ($length > 0 && $width > 0 && $height > 0) {
-                $has_dimensions = true;
-                $max_length = max($max_length, $length);
-                $max_width = max($max_width, $width);
-                $max_height = max($max_height, $height);
+            // Only process dimensions if all are numeric and not empty
+            if (!empty($length) && is_numeric($length) && 
+                !empty($width) && is_numeric($width) && 
+                !empty($height) && is_numeric($height)) {
+                
+                $length = (float) wc_get_dimension($length, 'cm');
+                $width = (float) wc_get_dimension($width, 'cm');
+                $height = (float) wc_get_dimension($height, 'cm');
+                
+                if ($length > 0 && $width > 0 && $height > 0) {
+                    $has_dimensions = true;
+                    $max_length = max($max_length, $length);
+                    $max_width = max($max_width, $width);
+                    $max_height = max($max_height, $height);
+                }
             }
         }
         
