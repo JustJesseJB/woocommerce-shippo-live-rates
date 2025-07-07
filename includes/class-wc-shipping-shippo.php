@@ -536,7 +536,7 @@ class WC_Shipping_Shippo_Live_Rates extends WC_Shipping_Method {
             $cost = $this->apply_markup($rate['amount']);
             
             // Create a unique rate ID
-            $rate_id = $this->id . ':' . $service_code;
+            $rate_id = $this->id . ':' . strtolower($rate['provider']) . '_' . $service_code;
             
             // Get service name
             $service_name = isset($rate['servicelevel']['name']) ? $rate['servicelevel']['name'] : '';
