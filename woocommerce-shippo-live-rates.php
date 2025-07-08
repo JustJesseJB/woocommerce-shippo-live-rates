@@ -21,7 +21,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define constants
-define('WC_SHIPPO_LIVE_RATES_VERSION', '1.0.3';
+define('WC_SHIPPO_LIVE_RATES_VERSION', '1.0.3');
 define('WC_SHIPPO_LIVE_RATES_PLUGIN_FILE', __FILE__);
 define('WC_SHIPPO_LIVE_RATES_PLUGIN_BASENAME', plugin_basename(__FILE__));
 define('WC_SHIPPO_LIVE_RATES_PLUGIN_DIR', plugin_dir_path(__FILE__));
