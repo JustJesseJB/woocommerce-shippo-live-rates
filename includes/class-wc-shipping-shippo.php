@@ -690,16 +690,36 @@ class WC_Shipping_Shippo_Live_Rates extends WC_Shipping_Method {
             
             // Get weight with proper null/empty handling
             $weight = $product->get_weight();
-            $weight = (!empty($weight) && is_numeric($weight)) ? wc_get_weight($weight, 'kg') : 0;
+            // Only call wc_get_weight if we have a valid numeric weight
+            if (!empty($weight) && is_numeric($weight)) {
+                $weight = wc_get_weight($weight, 'kg');
+            } else {
+                $weight = 0;
+            }
             
             // Get dimensions with proper null/empty handling
             $length = $product->get_length();
             $width = $product->get_width();
             $height = $product->get_height();
             
-            $length = (!empty($length) && is_numeric($length)) ? wc_get_dimension($length, 'cm') : 0;
-            $width = (!empty($width) && is_numeric($width)) ? wc_get_dimension($width, 'cm') : 0;
-            $height = (!empty($height) && is_numeric($height)) ? wc_get_dimension($height, 'cm') : 0;
+            // Only call wc_get_dimension if we have valid numeric dimensions
+            if (!empty($length) && is_numeric($length)) {
+                $length = wc_get_dimension($length, 'cm');
+            } else {
+                $length = 0;
+            }
+            
+            if (!empty($width) && is_numeric($width)) {
+                $width = wc_get_dimension($width, 'cm');
+            } else {
+                $width = 0;
+            }
+            
+            if (!empty($height) && is_numeric($height)) {
+                $height = wc_get_dimension($height, 'cm');
+            } else {
+                $height = 0;
+            }
             
             $contents[] = array(
                 'id'        => $product->get_id(),
