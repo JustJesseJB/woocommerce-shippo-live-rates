@@ -33,6 +33,12 @@ A WooCommerce plugin for displaying live shipping rates from USPS, UPS, and FedE
 
 ## Changelog
 
+### 1.0.3 - 2024-12-20
+- **Fix**: Fatal error when products have empty dimensions during checkout
+- **Fix**: Cache key generation now handles missing product dimensions gracefully
+- **Improve**: Added proper null/empty checks before calling wc_get_dimension()
+- **Improve**: Prevents checkout crashes for products without dimensions
+
 ### 1.0.2 - 2024-12-20
 - **Fix**: Shipping carrier grouping display issues
 - **Fix**: Incorrect carrier categorization on some themes

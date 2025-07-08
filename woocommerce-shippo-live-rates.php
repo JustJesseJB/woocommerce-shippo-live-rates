@@ -3,7 +3,7 @@
  * Plugin Name: WooCommerce Shippo Live Rates
  * Plugin URI: https://wooshippo.com/
  * Description: Display live shipping rates from USPS, UPS, and FedEx at checkout using Shippo API.
- * Version: 1.0.2
+ * Version: 1.0.3
  * Author: Ambition Amplified, LLC
  * Author URI: https://ambitionamplified.com/
  * Text Domain: woocommerce-shippo-live-rates
@@ -21,7 +21,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define constants
-define('WC_SHIPPO_LIVE_RATES_VERSION', '1.0.2');
+define('WC_SHIPPO_LIVE_RATES_VERSION', '1.0.3';
 define('WC_SHIPPO_LIVE_RATES_PLUGIN_FILE', __FILE__);
 define('WC_SHIPPO_LIVE_RATES_PLUGIN_BASENAME', plugin_basename(__FILE__));
 define('WC_SHIPPO_LIVE_RATES_PLUGIN_DIR', plugin_dir_path(__FILE__));
